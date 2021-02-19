@@ -28,8 +28,8 @@ class BERT(nn.Module):
 
     def forward(self, text):
         outputs = self.encoder(text)
-        last_hidden_states = outputs.last_hidden_states
-        text_embeddings = last_hidden_states[0][:,0,:]
+        last_hidden_states = outputs[0]
+        text_embeddings = last_hidden_states[:,0,:]
         text_features = self.fc(text_embeddings)
         # text_features = self.tanh(features)
         return text_features
