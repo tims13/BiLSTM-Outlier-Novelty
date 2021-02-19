@@ -55,14 +55,18 @@ print("Computing deep features...")
 
 review_features = []
 for x in tqdm(review_iter):
-    feature = model(x.comment_text)
+    text = x.comment_text.type(torch.LongTensor)
+    text = text.to(device)
+    feature = model(text)
     review_features.append(feature.detach().numpy())
 review_features = np.vstack(review_features)
 print(review_features.shape)
 
 novel_features = []
 for x in tqdm(review_iter):
-    feature = model(x.novel)
+    text = x.novel.type(torch.LongTensor)
+    text = text.to(device)
+    feature = model(text)
     novel_features.append(feature.detach().numpy())
 novel_features = np.vstack(novel_features)
 print(novel_features.shape)
