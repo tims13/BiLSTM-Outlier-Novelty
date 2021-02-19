@@ -58,16 +58,16 @@ for x in tqdm(review_iter):
     text = x.comment_text.type(torch.LongTensor)
     text = text.to(device)
     feature = model(text)
-    review_features.append(feature.detach().numpy())
+    review_features.append(feature.detach().cpu().numpy())
 review_features = np.vstack(review_features)
 print(review_features.shape)
 
 novel_features = []
-for x in tqdm(review_iter):
+for x in tqdm(novel_iter):
     text = x.novel.type(torch.LongTensor)
     text = text.to(device)
     feature = model(text)
-    novel_features.append(feature.detach().numpy())
+    novel_features.append(feature.detach().cpu().numpy())
 novel_features = np.vstack(novel_features)
 print(novel_features.shape)
 
