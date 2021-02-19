@@ -10,6 +10,7 @@ import spacy
 from spacy.symbols import ORTH
 from sklearn.neighbors import LocalOutlierFactor
 from model import BiLSTM
+from sklearn.svm import OneClassSVM
 
 def l2_normalize(x, axis=-1):
     y = np.max(np.sum(x ** 2, axis, keepdims=True), axis, keepdims=True)
@@ -17,6 +18,7 @@ def l2_normalize(x, axis=-1):
 
 data_review_csv_path = 'laptop/amazon_reviews.csv'
 data_outliers_csv_path = 'laptop/outliers.csv'
+data_novelty_csv_path = 'laptop/novel_needs.csv'
 glove_path = 'glove.6B.300d.txt'
 
 
@@ -38,11 +40,22 @@ tst = TabularDataset(
     fields = tst_datafields
 )
 
+novel_datafields = [
+    ("novel", TEXT)
+]
+novel = TabularDataset(
+    path = data_novelty_csv_path,
+    format = 'csv',
+    skip_header = True,
+    fields = novel_datafields
+)
+
 cache = '.vector_cache'
 vectors = Vectors(name=glove_path, cache=cache)
 TEXT.build_vocab(tst, vectors=vectors)
 
 data_iter = Iterator(tst, batch_size=1, device=-1, sort=False, sort_within_batch=False, repeat=False, shuffle=False)
+novel_iter = Iterator(novel, batch_size=1, device=-1, sort=False, sort_within_batch=False, repeat=False, shuffle=False)
 
 vocab = TEXT.vocab
 
@@ -63,16 +76,44 @@ for f in features:
     feats.append(f.detach().numpy())
 feats = np.vstack(feats)
 
-f = l2_normalize(feats, 0)
+novel_features = []
+for x in tqdm(novel_iter):
+    feature = model(x.novel)
+    novel_features.append(feature)
 
-lof = LocalOutlierFactor(n_neighbors=20, contamination=0.01, n_jobs=-1)
-res = lof.fit_predict(f)
+novel_feats = []
+for f in novel_features:
+    novel_feats.append(f.detach().numpy())
+novel_feats = np.vstack(novel_feats)
 
+# feats = l2_normalize(feats, 0)
+
+lof = LocalOutlierFactor(n_neighbors=20, contamination='auto', n_jobs=-1, novelty=True)
+res = lof.fit(feats)
+
+# find the outliers of the dataset
+'''
 data_review = pd.read_csv(data_review_csv_path)
-
 outliers = np.where(res == -1)
 ngf = lof.negative_outlier_factor_
 data_outliers = data_review.iloc[np.argsort(ngf)[0:outliers[0].shape[0]]]
 data_outliers.to_csv(data_outliers_csv_path, header=1, index=0)
 print("The outliers are saved!")
+'''
+
+# novelty
+res = lof.predict(novel_feats)
+scores = lof.score_samples(novel_feats)
+print("results:")
+print(res)
+print(scores)
+
+
+clf = OneClassSVM(nu=0.1, kernel="rbf", gamma=0.1)
+clf.fit(feats)
+res = clf.predict(novel_feats)
+scores = clf.score_samples(novel_feats)
+print("results:")
+print(res)
+print(scores)
 
