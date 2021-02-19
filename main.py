@@ -66,6 +66,7 @@ emb_matrix = vocab.vectors
 model = BiLSTM(vocab_size, hidden_dim, emb_dim, emb_matrix)
 
 print("Computing the deep features...")
+'''
 features = []
 for x in tqdm(data_iter):
     feature = model(x.comment_text)
@@ -75,9 +76,10 @@ feats = []
 for f in features:
     feats.append(f.detach().numpy())
 feats = np.vstack(feats)
-
+'''
 novel_features = []
 for x in tqdm(novel_iter):
+    print(x.novel.shape)
     feature = model(x.novel)
     novel_features.append(feature)
 
@@ -85,6 +87,7 @@ novel_feats = []
 for f in novel_features:
     novel_feats.append(f.detach().numpy())
 novel_feats = np.vstack(novel_feats)
+print(novel_feats.shape)
 
 # feats = l2_normalize(feats, 0)
 

@@ -27,7 +27,8 @@ class BERT(nn.Module):
         self.fc = nn.Linear(embedding_dim, feature_len)
 
     def forward(self, text):
-        last_hidden_states = self.encoder(text)
+        outputs = self.encoder(text)
+        last_hidden_states = outputs.last_hidden_states
         text_embeddings = last_hidden_states[0][:,0,:]
         text_features = self.fc(text_embeddings)
         # text_features = self.tanh(features)

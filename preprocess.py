@@ -20,8 +20,7 @@ for index in range(1, data.shape[1]):
     data_review = pd.concat([data_review, temp])
 
 data_review.reset_index(drop=True, inplace=True)
-
-data_review.to_csv(data_review_csv_path, header=1, index=0)
+data_review.to_csv(data_review_csv_path, header=['comment_text'], index=0)
 
 novel_needs = pd.read_excel(novel_needs_path, index_col=0)
 novel_needs.rename(columns={'make-up reviews': 'novel'}, inplace=True)

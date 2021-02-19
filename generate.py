@@ -3,15 +3,17 @@ import numpy as np
 import pandas as pd
 import torch
 from torchtext.data import Field
-from torchtext.vocab import Vectors
 from torchtext.data import TabularDataset
-from torchtext.data import Iterator, BucketIterator
+from torchtext.data import Iterator
 from tqdm import tqdm
-from transformers import BertTokenizer, BertModel
+from transformers import BertTokenizer
+from model import BERT
 
 data_np_path = 'laptop/review_novel'
 data_review_csv_path = 'laptop/amazon_reviews.csv'
 data_novelty_csv_path = 'laptop/novel_needs.csv'
+
+feature_len = 64
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print(device)
@@ -25,7 +27,7 @@ PAD_INDEX = tokenizer.convert_tokens_to_ids(tokenizer.pad_token)
 UNK_INDEX = tokenizer.convert_tokens_to_ids(tokenizer.unk_token)
 
 # Fields
-text_field = Field(use_vocab=False, tokenize=tokenizer.encode, lower=False, include_lengths=False, batch_first=False,
+text_field = Field(use_vocab=False, tokenize=tokenizer.encode, lower=False, include_lengths=False, batch_first=True,
                 fix_length=MAX_SEQ_LEN, pad_token=PAD_INDEX, unk_token=UNK_INDEX)
 rev_field = [('comment_text', text_field)]
 nov_field = [('novel', text_field)]
@@ -44,10 +46,10 @@ novel = TabularDataset(
     fields = nov_field
 )
 
-review_iter = Iterator(review, batch_size=1, device=-1, sort=False, sort_within_batch=False, repeat=False, shuffle=False)
-novel_iter = Iterator(novel, batch_size=1, device=-1, sort=False, sort_within_batch=False, repeat=False, shuffle=False)
+review_iter = Iterator(review, batch_size=1, device=device, sort=False, sort_within_batch=False, repeat=False, shuffle=False)
+novel_iter = Iterator(novel, batch_size=1, device=device, sort=False, sort_within_batch=False, repeat=False, shuffle=False)
 
-model = BERT().to(device)
+model = BERT(feature_len).to(device)
 
 print("Computing deep features...")
 
