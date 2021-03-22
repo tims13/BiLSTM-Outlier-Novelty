@@ -11,7 +11,12 @@ unzip glove.6B.zip
 python preprocess.py
 ```
 
-3. Run main.py
+3. Generate features and save
 ```
-python main.py
+python generate.py
+```
+
+4. Find the novel samples
+```
+python novel.py
 ```
