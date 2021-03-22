@@ -1,29 +1,63 @@
 import os
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
-data_review_path = 'laptop/amazon_reviews - IEEE.xlsx'
-data_review_csv_path = 'laptop/amazon_reviews.csv'
-novel_needs_path = 'laptop/novel_needs.xlsx'
-novel_needs_csv_path = 'laptop/novel_needs.csv'
+def trim_string(x, first_n_words=200):
+    x = x.split(maxsplit=first_n_words)
+    x = ' '.join(x[:first_n_words])
+    return x
 
+des_path = 'sentence/'
+data_path = des_path + 'annotation_sentence.xlsx'
+data_pos_csv_path = des_path + 'data_pos.csv'
+data_neg_csv_path = des_path + 'data_neg.csv'
+data_irre_csv_path = des_path + 'data_irre.csv'
+data_novel_csv_path = des_path + 'data_novel.csv'
 
-print("Preprocess...")
-data = pd.read_excel(data_review_path, index_col=0, header=1)
+train_test_ratio = 0.90
 
-data_review = data.iloc[:,0]
-data_review = data_review[data_review != ' ']
+data_paths = [
+    data_pos_csv_path,
+    data_neg_csv_path,
+    data_irre_csv_path,
+    data_novel_csv_path
+]
 
-for index in range(1, data.shape[1]):
-    temp = data.iloc[:,index]
-    temp = temp[temp != ' ']
-    data_review = pd.concat([data_review, temp])
+headers = [
+    ['pos'],
+    ['neg'],
+    ['irre'],
+    ['novel']
+]
 
-data_review.reset_index(drop=True, inplace=True)
-data_review.to_csv(data_review_csv_path, header=['comment_text'], index=0)
+data = pd.read_excel(data_path)
+data = data.iloc[:, 0:4]
 
-novel_needs = pd.read_excel(novel_needs_path, index_col=0)
-novel_needs.rename(columns={'make-up reviews': 'novel'}, inplace=True)
-novel_needs.to_csv(novel_needs_csv_path, header=1, index=0)
+for i in range(4):
+    data_t = data.iloc[:, i].astype(str)
+    data_t = data_t[data_t != 'nan']
+    data_t.reset_index(drop=True, inplace=True)
+    data_t.to_csv(data_paths[i], header=headers[i], index=0)
 
-print("The results are save in "+ data_review_csv_path + " and ", novel_needs_csv_path)
+data_pos = pd.read_csv(data_pos_csv_path)
+data_pos['label'] = 1
+data_pos.rename(columns={'pos': 'text'}, inplace=True)
+data_pos['text'] = data_pos['text'].apply(trim_string)
+
+data_neg = pd.read_csv(data_neg_csv_path)
+data_neg['label'] = 0
+data_neg.rename(columns={'neg': 'text'}, inplace=True)
+data_neg['text'] = data_neg['text'].apply(trim_string)
+
+# preprocess unknow intent / novelty
+data_novel = pd.read_csv(data_novel_csv_path)
+data_novel['label'] = 2
+data_novel.rename(columns={'novel': 'text'}, inplace=True)
+data_novel['text'] = data_novel['text'].apply(trim_string)
+
+df_train, df_test = train_test_split(data_neg, train_size = train_test_ratio, random_state=1)
+df_test_with_novel = pd.concat([df_test, data_novel], ignore_index=True, sort=False)
+
+df_train.to_csv(des_path + 'train.csv', index=False)
+df_test_with_novel.to_csv(des_path + 'test.csv', index=False)

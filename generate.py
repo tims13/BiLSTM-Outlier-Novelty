@@ -9,9 +9,10 @@ from tqdm import tqdm
 from transformers import BertTokenizer
 from model import BERT
 
-data_np_path = 'laptop/review_novel'
-data_review_csv_path = 'laptop/amazon_reviews.csv'
-data_novelty_csv_path = 'laptop/novel_needs.csv'
+des_path = 'sentence/'
+data_np_path = des_path + 'train_test'
+data_train_csv_path = des_path + 'train.csv'
+data_test_csv_path = des_path + 'test.csv'
 
 feature_len = 64
 
@@ -29,48 +30,48 @@ UNK_INDEX = tokenizer.convert_tokens_to_ids(tokenizer.unk_token)
 # Fields
 text_field = Field(use_vocab=False, tokenize=tokenizer.encode, lower=False, include_lengths=False, batch_first=True,
                 fix_length=MAX_SEQ_LEN, pad_token=PAD_INDEX, unk_token=UNK_INDEX)
-rev_field = [('comment_text', text_field)]
-nov_field = [('novel', text_field)]
+label_field = Field(sequential=False, use_vocab=False, batch_first=True, dtype=torch.int)
+fields = [('text', text_field), ('label', label_field)]
 
-review = TabularDataset(
-    path = data_review_csv_path,
+train = TabularDataset(
+    path = data_train_csv_path,
     format = 'csv',
     skip_header = True,
-    fields = rev_field
+    fields = fields
 )
 
-novel = TabularDataset(
-    path = data_novelty_csv_path,
+test = TabularDataset(
+    path = data_test_csv_path,
     format = 'csv',
     skip_header = True,
-    fields = nov_field
+    fields = fields
 )
 
-review_iter = Iterator(review, batch_size=1, device=device, sort=False, sort_within_batch=False, repeat=False, shuffle=False)
-novel_iter = Iterator(novel, batch_size=1, device=device, sort=False, sort_within_batch=False, repeat=False, shuffle=False)
+train_iter = Iterator(train, batch_size=1, device=device, sort=False, sort_within_batch=False, repeat=False, shuffle=False)
+test_iter = Iterator(test, batch_size=1, device=device, sort=False, sort_within_batch=False, repeat=False, shuffle=False)
 
 model = BERT(feature_len).to(device)
 
 print("Computing deep features...")
 
-review_features = []
-for x in tqdm(review_iter):
-    text = x.comment_text.type(torch.LongTensor)
+train_features = []
+for x in tqdm(train_iter):
+    text = x.text.type(torch.LongTensor)
     text = text.to(device)
     feature = model(text)
-    review_features.append(feature.detach().cpu().numpy())
-review_features = np.vstack(review_features)
-print(review_features.shape)
+    train_features.append(feature.detach().cpu().numpy())
+train_features = np.vstack(train_features)
+print(train_features.shape)
 
-novel_features = []
-for x in tqdm(novel_iter):
-    text = x.novel.type(torch.LongTensor)
+train_features = []
+for x in tqdm(train_iter):
+    text = x.text.type(torch.LongTensor)
     text = text.to(device)
     feature = model(text)
-    novel_features.append(feature.detach().cpu().numpy())
-novel_features = np.vstack(novel_features)
-print(novel_features.shape)
+    train_features.append(feature.detach().cpu().numpy())
+train_features = np.vstack(train_features)
+print(train_features.shape)
 
 # save the results
-np.savez(data_np_path, review=review_features, novel=novel_features)
+np.savez(data_np_path, train=train_features, test=train_features)
 print("The features are saved in "+ data_np_path)
