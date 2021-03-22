@@ -63,15 +63,15 @@ for x in tqdm(train_iter):
 train_features = np.vstack(train_features)
 print(train_features.shape)
 
-train_features = []
-for x in tqdm(train_iter):
+test_features = []
+for x in tqdm(test_iter):
     text = x.text.type(torch.LongTensor)
     text = text.to(device)
     feature = model(text)
-    train_features.append(feature.detach().cpu().numpy())
-train_features = np.vstack(train_features)
-print(train_features.shape)
+    test_features.append(feature.detach().cpu().numpy())
+test_features = np.vstack(test_features)
+print(test_features.shape)
 
 # save the results
-np.savez(data_np_path, train=train_features, test=train_features)
+np.savez(data_np_path, train=train_features, test=test_features)
 print("The features are saved in "+ data_np_path)
