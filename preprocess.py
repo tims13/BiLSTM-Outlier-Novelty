@@ -15,12 +15,12 @@ data_novel_path = des_path + 'novel_sentence.xlsx'
 train_test_ratio = 0.95
 
 df_novel = pd.read_excel(data_novel_path, header=None)
-df_novel['label'] = -1
+df_novel['label'] = 1
 df_novel.rename(columns={0: 'text'}, inplace=True)
 df_novel['text'] = df_novel['text'].apply(trim_string)
 
 data_need = pd.read_csv(data_need_path, index_col=0)
-data_need['label'] = 1
+data_need['label'] = 0
 data_need['text'] = data_need['text'].apply(trim_string)
 
 df_train, df_test = train_test_split(data_need, train_size = train_test_ratio, random_state=1)
