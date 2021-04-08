@@ -38,10 +38,6 @@ print(train.shape)
 print(test.shape)
 
 print('LOF training...')
-lof = LocalOutlierFactor(n_neighbors=20, contamination=0.5, novelty=True, n_jobs=-1)
-y_pred = evaluate_novel(lof, train, test, y_true, 'LOF')
-data_test['LOF'] = y_pred
-
 list_c = [0.1,0.2,0.3,0.4,0.5]
 for c in list_c:
     y_pred = evaluate_novel(c, train, test, y_true, 'LOF')
