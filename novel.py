@@ -6,15 +6,16 @@ from sklearn.ensemble import IsolationForest
 from sklearn.svm import OneClassSVM
 from sklearn.metrics import recall_score, precision_score
 
-def evaluate_novel(model, train_features, test_features, y_true, name):
+def evaluate_novel(c, train_features, test_features, y_true, name):
+    model = LocalOutlierFactor(n_neighbors=20, contamination=c, novelty=True, n_jobs=-1)
     model.fit(train_features)
     y_pred = model.predict(test_features)
     y_pred[y_pred != -1] = 0
     y_pred[y_pred == -1] = 1
     rec_score = recall_score(y_true, y_pred)
     prec_score = precision_score(y_true, y_pred)
-    print(name + ' RECALL:' + str(rec_score))
-    print(name + ' PRECISION:' + str(prec_score))
+    print(name + str(c) + ' RECALL:' + str(rec_score))
+    print(name + str(c) + ' PRECISION:' + str(prec_score))
     return y_pred
 
 des_path = 'sentence/'
@@ -41,6 +42,12 @@ lof = LocalOutlierFactor(n_neighbors=20, contamination=0.5, novelty=True, n_jobs
 y_pred = evaluate_novel(lof, train, test, y_true, 'LOF')
 data_test['LOF'] = y_pred
 
+list_c = [0.1,0.2,0.3,0.4,0.5]
+for c in list_c:
+    y_pred = evaluate_novel(c, train, test, y_true, 'LOF')
+    data_test[str(c)] = y_pred
+
+'''
 print('Isolation Forest training...')
 isolation_forest = IsolationForest(random_state=0, contamination=0.5, n_jobs=-1)
 y_pred = evaluate_novel(isolation_forest, train, test, y_true, 'ISO')
@@ -50,5 +57,5 @@ print('OC-SVM training...')
 oc_svm = OneClassSVM(gamma='auto')
 y_pred = evaluate_novel(oc_svm, train, test, y_true, 'OC-SVM')
 data_test['OC-SVM'] = y_pred
-
+'''
 data_test.to_csv(data_result_csv_path, index=False)
