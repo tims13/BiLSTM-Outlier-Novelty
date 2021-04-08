@@ -26,8 +26,6 @@ data_result_csv_path = des_path + 'results.csv'
 data_test = pd.read_csv(data_test_path)
 y_true = data_test['label']
 y_true = np.array(y_true, np.int)
-y_true[y_true != 2] = 0
-y_true[y_true == 2] = 1
 data_test['y_true'] = y_true
 
 data = np.load(data_np_path + '.npz')
