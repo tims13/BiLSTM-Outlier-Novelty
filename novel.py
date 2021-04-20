@@ -14,8 +14,10 @@ def evaluate_novel(c, train_features, test_features, y_true, name):
     y_pred[y_pred == -1] = 1
     rec_score = recall_score(y_true, y_pred)
     prec_score = precision_score(y_true, y_pred)
+    print("--------------------------------------------")
     print(name + str(c) + ' RECALL:' + str(rec_score))
     print(name + str(c) + ' PRECISION:' + str(prec_score))
+    print("--------------------------------------------")
     return y_pred
 
 des_path = 'sentence/'
@@ -36,7 +38,7 @@ print(train.shape)
 print(test.shape)
 
 print('LOF training...')
-list_c = [0.1,0.2,0.3,0.4,0.5]
+list_c = [0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2]
 for c in list_c:
     y_pred = evaluate_novel(c, train, test, y_true, 'LOF')
     data_test[str(c)] = y_pred
